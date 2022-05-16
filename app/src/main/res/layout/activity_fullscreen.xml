@@ -1,52 +1,126 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?attr/fullscreenBackgroundColor"
+    android:orientation="vertical"
     android:theme="@style/ThemeOverlay.BagpipesChanterMusicNotesPractice.FullscreenContainer"
     tools:context=".FullscreenActivity">
 
-    <!-- The primary full-screen view. This can be replaced with whatever view
-         is needed to present your content, e.g. VideoView, SurfaceView,
-         TextureView, etc. -->
-    <ImageView
-        android:id="@+id/fullscreen_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraint_layout_settings"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:keepScreenOn="true"
-        android:text="@string/dummy_content"
-        android:textColor="?attr/fullscreenTextColor"
-        android:textSize="50sp"
-        android:textStyle="bold" />
+        android:layout_height="match_parent">
 
-    <!-- This FrameLayout insets its children based on system windows using
-         android:fitsSystemWindows. -->
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="true">
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/checkbox_note_names"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="100dp"
+            android:text="Display Names of Notes"
+            app:layout_constraintBottom_toTopOf="@+id/textview_duration_label"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <LinearLayout
-            android:id="@+id/fullscreen_content_controls"
-            style="@style/Widget.Theme.BagpipesChanterMusicNotesPractice.ButtonBar.Fullscreen"
+        <TextView
+            android:id="@+id/textview_duration_label"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center_horizontal"
-            android:orientation="horizontal"
-            tools:ignore="UselessParent">
+            android:gravity="center"
+            android:labelFor="@id/slider_duration"
+            android:text="Duration of practice time in minutes"
+            app:layout_constraintBottom_toTopOf="@+id/slider_duration"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/checkbox_note_names" />
 
-            <Button
-                android:id="@+id/dummy_button"
-                style="?android:attr/buttonBarButtonStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/dummy_button" />
+        <com.google.android.material.slider.Slider
+            android:id="@+id/slider_duration"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stepSize="1.0"
+            android:value="4.0"
+            android:valueFrom="1.0"
+            android:valueTo="15.0"
+            app:labelBehavior="visible"
+            app:layout_constraintBottom_toTopOf="@+id/textview_persist_label"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textview_duration_label" />
 
-        </LinearLayout>
-    </FrameLayout>
+        <TextView
+            android:id="@+id/textview_persist_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Persist time in seconds"
+            app:layout_constraintBottom_toTopOf="@+id/slider_persist"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:labelFor="@id/slider_persist"
+            app:layout_constraintTop_toBottomOf="@+id/slider_duration" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/slider_persist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:stepSize="1.0"
+            android:value="10.0"
+            android:valueFrom="1.0"
+            android:valueTo="40.0"
+            app:labelBehavior="visible"
+            app:layout_constraintBottom_toTopOf="@+id/button_begin"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textview_persist_label" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_begin"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="100dp"
+            android:backgroundTint="@color/black_overlay"
+            android:text="@string/begin_button"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/slider_persist" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraint_layout_practicing"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:keepScreenOn="true">
+
+        <ImageView
+            android:id="@+id/imageview_visual_note"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:src="@drawable/low_g" />
+
+        <TextView
+            android:id="@+id/textview_written_note"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="serif-monospace"
+            android:textSize="75sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/imageview_visual_note"
+            tools:text="A" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </FrameLayout>

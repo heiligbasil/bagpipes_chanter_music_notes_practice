@@ -6,8 +6,8 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowInsets
 import android.widget.ImageView
-import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.slider.LabelFormatter
 import com.heiligbasil.bagpipeschantermusicnotespractice.databinding.ActivityFullscreenBinding
 import kotlin.random.Random
 
@@ -19,19 +19,8 @@ class FullscreenActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityFullscreenBinding
     private lateinit var fullscreenContent: ImageView
-    private lateinit var fullscreenContentControls: LinearLayout
     private val hideHandler = Handler(Looper.getMainLooper())
-
-    private val countDownTimer: CountDownTimer = object : CountDownTimer(500000, 10000) {
-        override fun onTick(millisUntilFinished: Long) {
-            val randomInt = Random.nextInt(0, 9)
-            binding.fullscreenContent.setImageResource(Notes.values().get(randomInt).resource)
-        }
-
-        override fun onFinish() {
-            show()
-        }
-    }
+    private var countDownTimer: CountDownTimer? = null
 
     @SuppressLint("InlinedApi")
     private val hidePart2Runnable = Runnable {
@@ -54,7 +43,10 @@ class FullscreenActivity : AppCompatActivity() {
     private val showPart2Runnable = Runnable {
         // Delayed display of UI elements
         supportActionBar?.show()
-        fullscreenContentControls.visibility = View.VISIBLE
+        binding.constraintLayoutSettings.visibility = View.VISIBLE
+        binding.sliderDuration.labelBehavior = LabelFormatter.LABEL_VISIBLE
+        binding.sliderPersist.labelBehavior = LabelFormatter.LABEL_VISIBLE
+        binding.constraintLayoutPracticing.visibility = View.GONE
     }
     private var isFullscreen: Boolean = false
 
@@ -68,10 +60,12 @@ class FullscreenActivity : AppCompatActivity() {
     private val delayHideTouchListener = View.OnTouchListener { view, motionEvent ->
         when (motionEvent.action) {
             MotionEvent.ACTION_DOWN -> if (AUTO_HIDE) {
-                delayedHide(AUTO_HIDE_DELAY_MILLIS)
+                delayedHide()
             }
-            MotionEvent.ACTION_UP -> view.performClick()
+            MotionEvent.ACTION_UP ->
+                view.performClick()
             else -> {
+                print("x")
             }
         }
         false
@@ -89,15 +83,27 @@ class FullscreenActivity : AppCompatActivity() {
         isFullscreen = true
 
         // Set up the user interaction to manually show or hide the system UI.
-        fullscreenContent = binding.fullscreenContent
+        fullscreenContent = binding.imageviewVisualNote
         fullscreenContent.setOnClickListener { toggle() }
-
-        fullscreenContentControls = binding.fullscreenContentControls
 
         // Upon interacting with UI controls, delay any scheduled hide()
         // operations to prevent the jarring behavior of controls going away
         // while interacting with the UI.
-        binding.dummyButton.setOnTouchListener(delayHideTouchListener)
+        binding.buttonBegin.setOnTouchListener(delayHideTouchListener)
+        binding.sliderDuration.setLabelFormatter {
+            resources.getQuantityString(
+                R.plurals.plural_minutes,
+                it.toInt(),
+                it.toInt()
+            )
+        }
+        binding.sliderPersist.setLabelFormatter {
+            resources.getQuantityString(
+                R.plurals.plural_seconds,
+                it.toInt(),
+                it.toInt()
+            )
+        }
     }
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
@@ -106,7 +112,7 @@ class FullscreenActivity : AppCompatActivity() {
         // Trigger the initial hide() shortly after the activity has been
         // created, to briefly hint to the user that UI controls
         // are available.
-        delayedHide(100)
+//        delayedHide(100)
     }
 
     private fun toggle() {
@@ -120,13 +126,31 @@ class FullscreenActivity : AppCompatActivity() {
     private fun hide() {
         // Hide UI first
         supportActionBar?.hide()
-        fullscreenContentControls.visibility = View.GONE
+        binding.sliderDuration.labelBehavior = LabelFormatter.LABEL_GONE
+        binding.sliderPersist.labelBehavior = LabelFormatter.LABEL_GONE
+        Handler(mainLooper).postDelayed(Runnable {
+            binding.constraintLayoutSettings.visibility = View.GONE
+        }, 50L)
+        binding.constraintLayoutPracticing.visibility = View.VISIBLE
         isFullscreen = false
 
         // Schedule a runnable to remove the status and navigation bar after a delay
         hideHandler.removeCallbacks(showPart2Runnable)
         hideHandler.postDelayed(hidePart2Runnable, UI_ANIMATION_DELAY.toLong())
-        countDownTimer.start()
+        val duration = binding.sliderDuration.value.toSeconds() * 60L
+        val interval = binding.sliderPersist.value.toSeconds()
+        countDownTimer = object : CountDownTimer(duration, interval) {
+            override fun onTick(millisUntilFinished: Long) {
+                val randomInt = Random.nextInt(0, 9)
+                binding.imageviewVisualNote.setImageResource(Notes.values().get(randomInt).resource)
+                if (binding.checkboxNoteNames.isChecked) binding.textviewWrittenNote.text =
+                    Notes.values().get(randomInt).note
+            }
+
+            override fun onFinish() {
+                show()
+            }
+        }.start()
     }
 
     private fun show() {
@@ -143,18 +167,16 @@ class FullscreenActivity : AppCompatActivity() {
         // Schedule a runnable to display UI elements after a delay
         hideHandler.removeCallbacks(hidePart2Runnable)
         hideHandler.postDelayed(showPart2Runnable, UI_ANIMATION_DELAY.toLong())
-        countDownTimer.cancel()
-        binding.fullscreenContent.setImageDrawable(null)
+        countDownTimer?.cancel()
+        binding.imageviewVisualNote.setImageDrawable(null)
     }
 
-    /**
-     * Schedules a call to hide() in [delayMillis], canceling any
-     * previously scheduled calls.
-     */
-    private fun delayedHide(delayMillis: Int) {
+    private fun delayedHide() {
         hideHandler.removeCallbacks(hideRunnable)
-        hideHandler.postDelayed(hideRunnable, delayMillis.toLong())
+        hideHandler.postDelayed(hideRunnable, 250L)
     }
+
+    private fun Float.toSeconds() = this.toLong() * 1000L
 
     companion object {
         /**
@@ -162,12 +184,6 @@ class FullscreenActivity : AppCompatActivity() {
          * [AUTO_HIDE_DELAY_MILLIS] milliseconds.
          */
         private const val AUTO_HIDE = true
-
-        /**
-         * If [AUTO_HIDE] is set, the number of milliseconds to wait after
-         * user interaction before hiding the system UI.
-         */
-        private const val AUTO_HIDE_DELAY_MILLIS = 3000
 
         /**
          * Some older devices needs a small delay between UI widget updates
