@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">Bagpipes Chanter Music Notes Practice</string>
     <string name="begin_button">Begin Practice</string>
+    <string name="display_names_of_notes">Display Names of Notes</string>
+    <string name="duration_of_practice_time_in_minutes">Duration of practice time in minutes</string>
     <plurals name="plural_seconds">
         <item quantity="one">%d second</item>
         <item quantity="other">%d seconds</item>

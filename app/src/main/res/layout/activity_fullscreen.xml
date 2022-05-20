@@ -20,7 +20,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="100dp"
-            android:text="Display Names of Notes"
+            android:text="@string/display_names_of_notes"
             app:layout_constraintBottom_toTopOf="@+id/textview_duration_label"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -32,7 +32,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:labelFor="@id/slider_duration"
-            android:text="Duration of practice time in minutes"
+            android:text="@string/duration_of_practice_time_in_minutes"
             app:layout_constraintBottom_toTopOf="@+id/slider_duration"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -43,7 +43,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:stepSize="1.0"
-            android:value="4.0"
+            android:value="10.0"
             android:valueFrom="1.0"
             android:valueTo="15.0"
             app:labelBehavior="visible"
@@ -57,11 +57,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
+            android:labelFor="@id/slider_persist"
             android:text="Persist time in seconds"
             app:layout_constraintBottom_toTopOf="@+id/slider_persist"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            android:labelFor="@id/slider_persist"
             app:layout_constraintTop_toBottomOf="@+id/slider_duration" />
 
         <com.google.android.material.slider.Slider
@@ -69,9 +69,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:stepSize="1.0"
-            android:value="10.0"
+            android:value="5.0"
             android:valueFrom="1.0"
-            android:valueTo="40.0"
+            android:valueTo="15.0"
             app:labelBehavior="visible"
             app:layout_constraintBottom_toTopOf="@+id/button_begin"
             app:layout_constraintEnd_toEndOf="parent"
@@ -97,12 +97,25 @@
         android:id="@+id/constraint_layout_practicing"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:keepScreenOn="true">
+        android:keepScreenOn="true"
+        android:visibility="gone">
+
+        <com.heiligbasil.bagpipeschantermusicnotespractice.StaffView
+            android:id="@+id/staff_view"
+            android:layout_width="350dp"
+            android:layout_height="300dp"
+            android:background="@color/white"
+            android:visibility="visible"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <ImageView
             android:id="@+id/imageview_visual_note"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -115,10 +128,9 @@
             android:layout_height="wrap_content"
             android:fontFamily="serif-monospace"
             android:textSize="75sp"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/imageview_visual_note"
+            app:layout_constraintTop_toBottomOf="@id/staff_view"
             tools:text="A" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

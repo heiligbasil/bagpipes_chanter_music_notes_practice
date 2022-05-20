@@ -40,6 +40,7 @@ class FullscreenActivity : AppCompatActivity() {
                         View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
         }
     }
+
     private val showPart2Runnable = Runnable {
         // Delayed display of UI elements
         supportActionBar?.show()
@@ -48,6 +49,7 @@ class FullscreenActivity : AppCompatActivity() {
         binding.sliderPersist.labelBehavior = LabelFormatter.LABEL_VISIBLE
         binding.constraintLayoutPracticing.visibility = View.GONE
     }
+
     private var isFullscreen: Boolean = false
 
     private val hideRunnable = Runnable { hide() }
@@ -65,7 +67,6 @@ class FullscreenActivity : AppCompatActivity() {
             MotionEvent.ACTION_UP ->
                 view.performClick()
             else -> {
-                print("x")
             }
         }
         false
@@ -137,12 +138,12 @@ class FullscreenActivity : AppCompatActivity() {
         // Schedule a runnable to remove the status and navigation bar after a delay
         hideHandler.removeCallbacks(showPart2Runnable)
         hideHandler.postDelayed(hidePart2Runnable, UI_ANIMATION_DELAY.toLong())
-        val duration = binding.sliderDuration.value.toSeconds() * 60L
-        val interval = binding.sliderPersist.value.toSeconds()
-        countDownTimer = object : CountDownTimer(duration, interval) {
+        val practiceDuration = binding.sliderDuration.value.toSeconds() * 60L
+        val noteInterval = binding.sliderPersist.value.toSeconds()
+        countDownTimer = object : CountDownTimer(practiceDuration, noteInterval) {
             override fun onTick(millisUntilFinished: Long) {
-                val randomInt = Random.nextInt(0, 9)
-                binding.imageviewVisualNote.setImageResource(Notes.values().get(randomInt).resource)
+                val randomInt = Random(System.currentTimeMillis()).nextInt(0, 9)
+                binding.staffView.anim(Notes.values().get(randomInt), noteInterval)
                 if (binding.checkboxNoteNames.isChecked) binding.textviewWrittenNote.text =
                     Notes.values().get(randomInt).note
             }
