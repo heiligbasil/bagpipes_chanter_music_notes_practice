@@ -100,6 +100,16 @@
         android:keepScreenOn="true"
         android:visibility="gone">
 
+        <TextView
+            android:id="@+id/textview_remaining_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            app:layout_constraintBottom_toTopOf="@id/staff_view"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            tools:text="10:34" />
+
         <com.heiligbasil.bagpipeschantermusicnotespractice.StaffView
             android:id="@+id/staff_view"
             android:layout_width="350dp"
@@ -110,17 +120,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-
-        <ImageView
-            android:id="@+id/imageview_visual_note"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:src="@drawable/low_g" />
 
         <TextView
             android:id="@+id/textview_written_note"

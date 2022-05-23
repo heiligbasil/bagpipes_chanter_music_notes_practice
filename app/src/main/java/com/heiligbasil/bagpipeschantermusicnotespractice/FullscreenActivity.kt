@@ -5,7 +5,6 @@ import android.os.*
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowInsets
-import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.slider.LabelFormatter
 import com.heiligbasil.bagpipeschantermusicnotespractice.databinding.ActivityFullscreenBinding
@@ -18,7 +17,7 @@ import kotlin.random.Random
 class FullscreenActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityFullscreenBinding
-    private lateinit var fullscreenContent: ImageView
+    private lateinit var fullscreenContent: StaffView
     private val hideHandler = Handler(Looper.getMainLooper())
     private var countDownTimer: CountDownTimer? = null
 
@@ -84,7 +83,7 @@ class FullscreenActivity : AppCompatActivity() {
         isFullscreen = true
 
         // Set up the user interaction to manually show or hide the system UI.
-        fullscreenContent = binding.imageviewVisualNote
+        fullscreenContent = binding.staffView
         fullscreenContent.setOnClickListener { toggle() }
 
         // Upon interacting with UI controls, delay any scheduled hide()
@@ -142,6 +141,7 @@ class FullscreenActivity : AppCompatActivity() {
         val noteInterval = binding.sliderPersist.value.toSeconds()
         countDownTimer = object : CountDownTimer(practiceDuration, noteInterval) {
             override fun onTick(millisUntilFinished: Long) {
+                binding.textviewRemainingTime.text = millisUntilFinished.millisToTime()
                 val randomInt = Random(System.currentTimeMillis()).nextInt(0, 9)
                 binding.staffView.anim(Notes.values().get(randomInt), noteInterval)
                 if (binding.checkboxNoteNames.isChecked) binding.textviewWrittenNote.text =
@@ -169,7 +169,6 @@ class FullscreenActivity : AppCompatActivity() {
         hideHandler.removeCallbacks(hidePart2Runnable)
         hideHandler.postDelayed(showPart2Runnable, UI_ANIMATION_DELAY.toLong())
         countDownTimer?.cancel()
-        binding.imageviewVisualNote.setImageDrawable(null)
     }
 
     private fun delayedHide() {
@@ -178,6 +177,18 @@ class FullscreenActivity : AppCompatActivity() {
     }
 
     private fun Float.toSeconds() = this.toLong() * 1000L
+
+    private fun Long.millisToTime(): String {
+        val totalSeconds = this / 1000
+        val seconds = totalSeconds % 60
+        val minutes = totalSeconds / 60 % 60
+        val hours = totalSeconds / 3600
+        return if (hours > 0) {
+            "%d:%02d:%02d".format(hours, minutes, seconds)
+        } else {
+            "%02d:%02d".format(minutes, seconds)
+        }
+    }
 
     companion object {
         /**
