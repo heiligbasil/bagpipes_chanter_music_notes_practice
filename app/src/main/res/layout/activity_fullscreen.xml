@@ -58,7 +58,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:labelFor="@id/slider_persist"
-            android:text="Persist time in seconds"
+            android:text="@string/persist_time_in_seconds"
             app:layout_constraintBottom_toTopOf="@+id/slider_persist"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -69,7 +69,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:stepSize="1.0"
-            android:value="5.0"
+            android:value="4.0"
             android:valueFrom="1.0"
             android:valueTo="15.0"
             app:labelBehavior="visible"
@@ -105,9 +105,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
+            android:textSize="30sp"
             app:layout_constraintBottom_toTopOf="@id/staff_view"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
             tools:text="10:34" />
 
         <com.heiligbasil.bagpipeschantermusicnotespractice.StaffView

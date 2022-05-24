@@ -3,6 +3,7 @@
     <string name="begin_button">Begin Practice</string>
     <string name="display_names_of_notes">Display Names of Notes</string>
     <string name="duration_of_practice_time_in_minutes">Duration of practice time in minutes</string>
+    <string name="persist_time_in_seconds">Persist time in seconds</string>
     <plurals name="plural_seconds">
         <item quantity="one">%d second</item>
         <item quantity="other">%d seconds</item>

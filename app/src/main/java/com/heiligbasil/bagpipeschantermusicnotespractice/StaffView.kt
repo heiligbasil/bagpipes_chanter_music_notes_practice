@@ -85,8 +85,9 @@ class StaffView @JvmOverloads constructor(
             canvas?.save()
             canvas?.rotate(-180f, 205f.dp2px(), 100f.dp2px())
             drawQuarterNo(canvas)
-            if (showingNote == Notes.HIGH_A)
+            if (showingNote == Notes.HIGH_A) {
                 canvas?.drawText(CHAR_STAFF_1, my_x - 30f, my_y + 150f, bk5)
+            }
             canvas?.restore()
         } else {
             drawQuarterNo(canvas)
