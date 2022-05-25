@@ -15,16 +15,36 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/nested_scrollview_session_type"
+            android:layout_width="350dp"
+            android:layout_height="150dp"
+            android:fadeScrollbars="false"
+            android:scrollbarAlwaysDrawVerticalTrack="true"
+            android:scrollbarFadeDuration="0"
+            android:scrollbars="vertical"
+            app:layout_constraintBottom_toTopOf="@id/checkbox_note_names"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/linear_layout_session_type"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical" />
+
+        </androidx.core.widget.NestedScrollView>
+
         <com.google.android.material.checkbox.MaterialCheckBox
             android:id="@+id/checkbox_note_names"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="100dp"
             android:text="@string/display_names_of_notes"
             app:layout_constraintBottom_toTopOf="@+id/textview_duration_label"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toBottomOf="@id/nested_scrollview_session_type" />
 
         <TextView
             android:id="@+id/textview_duration_label"
