@@ -44,20 +44,25 @@ class StaffView @JvmOverloads constructor(
         }
     val y1 =
         Paint().apply { color = Color.YELLOW;strokeWidth = 5f;textSize = 420f;isAntiAlias = true; }
-    var showingNote: Notes = Notes.LOW_G
+    var showingNote: Any = Notes.LOW_G
 
-    fun anim(noteToShow: Notes, noteInterval: Long) {
+    fun anim(noteToShow: Any, noteInterval: Long) {
         showingNote = noteToShow
-        if (noteToShow == Notes.HIGH_A) needsLedgerLine = true
         var startingValue = 850f
         var endingValue = 300f
-        my_y = 550f - (50 * noteToShow.ordinal).toFloat()
-        if (noteToShow.flipped) {
-            startingValue = 50f
-            endingValue = 600f
-            my_y = 100f + (50 * noteToShow.ordinal).toFloat()
+        if (noteToShow is Notes) {
+            if (noteToShow == Notes.HIGH_A) {
+                needsLedgerLine = true
+            }
+            my_y = 550f - (50 * noteToShow.ordinal).toFloat()
+            if (noteToShow.flipped) {
+                startingValue = 50f
+                endingValue = 600f
+                my_y = 100f + (50 * noteToShow.ordinal).toFloat()
+            }
+        } else {
+            my_y = 230f.dp2px()
         }
-
         val animator = ValueAnimator.ofFloat(startingValue, endingValue)
         animator.interpolator = LinearInterpolator()
         animator.duration = noteInterval
@@ -71,7 +76,7 @@ class StaffView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         drawStaffScale(canvas)
-        drawQuarterNote(canvas)
+        drawNoteOrSymbol(canvas)
     }
 
     private fun drawStaffScale(canvas: Canvas?) {
@@ -80,8 +85,8 @@ class StaffView @JvmOverloads constructor(
         canvas?.drawText(CHAR_BAR_START, 100f.dp2px(), 230f.dp2px(), bk3)
     }
 
-    private fun drawQuarterNote(canvas: Canvas?) {
-        if (showingNote.flipped) {
+    private fun drawNoteOrSymbol(canvas: Canvas?) {
+        if ((showingNote is Notes) && (showingNote as Notes).flipped) {
             canvas?.save()
             canvas?.rotate(-180f, 205f.dp2px(), 100f.dp2px())
             drawQuarterNo(canvas)
@@ -90,13 +95,21 @@ class StaffView @JvmOverloads constructor(
             }
             canvas?.restore()
         } else {
-            drawQuarterNo(canvas)
+            if (showingNote is Notes) {
+                drawQuarterNo(canvas)
+            } else {
+                drawSymbolNo(canvas)
+            }
         }
     }
 
     private fun drawQuarterNo(canvas: Canvas?) {
         canvas?.drawText(CHAR_QUARTER_NOTE, my_x, my_y, bk4)
         if (needsLedgerLine) canvas?.drawText(CHAR_QUARTER_NOTE, my_x, my_y, bk4)
+    }
+
+    private fun drawSymbolNo(canvas: Canvas?) {
+        canvas?.drawText((showingNote as Symbols).visual, my_x, my_y, bk3)
     }
 
     private fun Float.dp2px(): Float {

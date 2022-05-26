@@ -25,8 +25,7 @@ class FullscreenActivity : AppCompatActivity() {
     private val hideHandler = Handler(Looper.getMainLooper())
     private var countDownTimer: CountDownTimer? = null
     private var sessionType = SessionType.RANDOM
-    private var previousNote = Notes.LOW_G
-    private var upcomingNotesList = arrayListOf<Notes>()
+    private var upcomingNotesList = arrayListOf<Any>()
 
     @SuppressLint("InlinedApi")
     private val hidePart2Runnable = Runnable {
@@ -172,7 +171,11 @@ class FullscreenActivity : AppCompatActivity() {
                 val noteToShow = getNextNote()
                 binding.staffView.anim(noteToShow, noteInterval)
                 if (binding.checkboxNoteNames.isChecked) {
-                    binding.textviewWrittenNote.text = noteToShow.visual
+                    if (noteToShow is Notes) {
+                        binding.textviewWrittenNote.text = noteToShow.visual
+                    } else {
+                        binding.textviewWrittenNote.text = ""
+                    }
                 }
             }
 
@@ -219,21 +222,31 @@ class FullscreenActivity : AppCompatActivity() {
         }
     }
 
-    private fun getNextNote(): Notes {
+    private fun getNextNote(): Any {
         return when (sessionType) {
             SessionType.RANDOM, SessionType.RANDOM_NO_DUPES -> {
-                var noteToShow: Notes
-                do {
-                    val randomInt = Random(System.currentTimeMillis()).nextInt(0, 9)
-                    noteToShow = Notes.values().get(randomInt)
-                } while (sessionType == SessionType.RANDOM_NO_DUPES && noteToShow == previousNote)
-                noteToShow
+                if (upcomingNotesList.isEmpty()) {
+                    var lastRandomNote = -1
+                    repeat(50) {
+                        val randomNote = Random(System.nanoTime()).nextInt(0, 9)
+                        if (sessionType == SessionType.RANDOM_NO_DUPES && randomNote == lastRandomNote) {
+                            return@repeat
+                        }
+                        upcomingNotesList.add(Notes.values()[randomNote])
+                        lastRandomNote = randomNote
+                    }
+                }
+                val noteToReturn = upcomingNotesList[0]
+                upcomingNotesList.removeAt(0)
+                return noteToReturn
             }
             SessionType.SCALE_UP -> {
                 if (upcomingNotesList.isEmpty()) {
                     Notes.values().forEach { note ->
                         upcomingNotesList.add(note)
                     }
+                    upcomingNotesList.add(Symbols.END_BAR)
+                    upcomingNotesList.add(Symbols.PAUSE)
                 }
                 val noteToReturn = upcomingNotesList[0]
                 upcomingNotesList.removeAt(0)
@@ -244,6 +257,8 @@ class FullscreenActivity : AppCompatActivity() {
                     Notes.values().reversedArray().forEach { note ->
                         upcomingNotesList.add(note)
                     }
+                    upcomingNotesList.add(Symbols.END_BAR)
+                    upcomingNotesList.add(Symbols.PAUSE)
                 }
                 val noteToReturn = upcomingNotesList[0]
                 upcomingNotesList.removeAt(0)
@@ -257,6 +272,8 @@ class FullscreenActivity : AppCompatActivity() {
                     Notes.values().reversedArray().forEach { note ->
                         upcomingNotesList.add(note)
                     }
+                    upcomingNotesList.add(Symbols.END_BAR)
+                    upcomingNotesList.add(Symbols.PAUSE)
                 }
                 val noteToReturn = upcomingNotesList[0]
                 upcomingNotesList.removeAt(0)
@@ -272,6 +289,8 @@ class FullscreenActivity : AppCompatActivity() {
                             }
                         }
                     }
+                    upcomingNotesList.add(Symbols.END_BAR)
+                    upcomingNotesList.add(Symbols.PAUSE)
                 }
                 val noteToReturn = upcomingNotesList[0]
                 upcomingNotesList.removeAt(0)
@@ -287,6 +306,8 @@ class FullscreenActivity : AppCompatActivity() {
                             }
                         }
                     }
+                    upcomingNotesList.add(Symbols.END_BAR)
+                    upcomingNotesList.add(Symbols.PAUSE)
                 }
                 val noteToReturn = upcomingNotesList[0]
                 upcomingNotesList.removeAt(0)
@@ -310,6 +331,8 @@ class FullscreenActivity : AppCompatActivity() {
                             }
                         }
                     }
+                    upcomingNotesList.add(Symbols.END_BAR)
+                    upcomingNotesList.add(Symbols.PAUSE)
                 }
                 val noteToReturn = upcomingNotesList[0]
                 upcomingNotesList.removeAt(0)
@@ -317,7 +340,7 @@ class FullscreenActivity : AppCompatActivity() {
             }
             SessionType.PRESET_1 -> {
                 if (upcomingNotesList.isEmpty()) {
-                    "GABGABBAGBAG".forEach { noteString ->
+                    "GABGABBAGBAG|_".forEach { noteString ->
                         upcomingNotesList.add(convertNoteStringToEnum(noteString))
                     }
                 }
@@ -327,7 +350,7 @@ class FullscreenActivity : AppCompatActivity() {
             }
             SessionType.PRESET_2 -> {
                 if (upcomingNotesList.isEmpty()) {
-                    "BCBCBCBCBCBC".forEach { noteString ->
+                    "BCBCBCBCBCBC|_".forEach { noteString ->
                         upcomingNotesList.add(convertNoteStringToEnum(noteString))
                     }
                 }
@@ -337,7 +360,7 @@ class FullscreenActivity : AppCompatActivity() {
             }
             SessionType.PRESET_3 -> {
                 if (upcomingNotesList.isEmpty()) {
-                    "GABCBAGGABCBAG".forEach { noteString ->
+                    "GABCBAGGABCBAG|_".forEach { noteString ->
                         upcomingNotesList.add(convertNoteStringToEnum(noteString))
                     }
                 }
@@ -347,7 +370,7 @@ class FullscreenActivity : AppCompatActivity() {
             }
             SessionType.PRESET_4 -> {
                 if (upcomingNotesList.isEmpty()) {
-                    "CDCDCBACDCDACD".forEach { noteString ->
+                    "CDCDCBACDCDACD|_".forEach { noteString ->
                         upcomingNotesList.add(convertNoteStringToEnum(noteString))
                     }
                 }
@@ -357,7 +380,7 @@ class FullscreenActivity : AppCompatActivity() {
             }
             SessionType.PRESET_5 -> {
                 if (upcomingNotesList.isEmpty()) {
-                    "GABCDCBAGABCDCD".forEach { noteString ->
+                    "GABCDCBAGABCDCD|_".forEach { noteString ->
                         upcomingNotesList.add(convertNoteStringToEnum(noteString))
                     }
                 }
@@ -367,7 +390,7 @@ class FullscreenActivity : AppCompatActivity() {
             }
             SessionType.PRESET_6 -> {
                 if (upcomingNotesList.isEmpty()) {
-                    "ADCDBGAADBDACD".forEach { noteString ->
+                    "ADCDBGAADBDACD|_".forEach { noteString ->
                         upcomingNotesList.add(convertNoteStringToEnum(noteString))
                     }
                 }
@@ -379,7 +402,9 @@ class FullscreenActivity : AppCompatActivity() {
     }
 
     private fun convertNoteStringToEnum(noteString: Char) =
-        Notes.values().find { note -> note.notation == noteString.toString() } ?: Notes.HIGH_A
+        Notes.values().find { note -> note.notation == noteString.toString() }
+            ?: Symbols.values().find { symbol -> symbol.notation == noteString.toString() }
+            ?: Notes.HIGH_A
 
     companion object {
         /**
