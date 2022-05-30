@@ -8,8 +8,7 @@ import android.view.View
 import android.view.WindowInsets
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.allViews
-import androidx.core.view.children
+import androidx.core.view.*
 import com.google.android.material.slider.LabelFormatter
 import com.heiligbasil.bagpipeschantermusicnotespractice.databinding.ActivityFullscreenBinding
 import kotlin.random.Random
@@ -23,9 +22,12 @@ class FullscreenActivity : AppCompatActivity() {
     private lateinit var binding: ActivityFullscreenBinding
     private lateinit var fullscreenContent: StaffView
     private val hideHandler = Handler(Looper.getMainLooper())
-    private var countDownTimer: CountDownTimer? = null
+    private var countDownTimer = ExtendedCountDownTimer()
     private var sessionType = SessionType.RANDOM
     private var upcomingNotesList = arrayListOf<Any>()
+    private var upcomingNotesListIndex = 0
+    private var timerDuration = 10_000L
+    private var noteInterval = 1_000L
 
     @SuppressLint("InlinedApi")
     private val hidePart2Runnable = Runnable {
@@ -33,16 +35,12 @@ class FullscreenActivity : AppCompatActivity() {
         if (Build.VERSION.SDK_INT >= 30) {
             fullscreenContent.windowInsetsController?.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
         } else {
-            // Note that some of these constants are new as of API 16 (Jelly Bean)
-            // and API 19 (KitKat). It is safe to use them, as they are inlined
-            // at compile-time and do nothing on earlier devices.
-            fullscreenContent.systemUiVisibility =
-                View.SYSTEM_UI_FLAG_LOW_PROFILE or
-                        View.SYSTEM_UI_FLAG_FULLSCREEN or
-                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
-                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
-                        View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
-                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+            WindowInsetsControllerCompat(window, window.decorView).let { controller ->
+                controller.hide(WindowInsetsCompat.Type.systemBars())
+                controller.systemBarsBehavior =
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            }
         }
     }
 
@@ -57,7 +55,7 @@ class FullscreenActivity : AppCompatActivity() {
 
     private var isFullscreen: Boolean = false
 
-    private val hideRunnable = Runnable { hide() }
+    private val hideRunnable = Runnable { goFullscreen() }
 
     /**
      * Touch listener to use for in-layout UI controls to delay hiding the
@@ -112,6 +110,104 @@ class FullscreenActivity : AppCompatActivity() {
                 it.toInt()
             )
         }
+        binding.buttonRewind.setOnClickListener {
+            countDownTimer.rewindByInterval()
+            upcomingNotesListIndex--
+            if (upcomingNotesListIndex < 0) {
+                upcomingNotesListIndex = 0
+            }
+            timerDuration = countDownTimer.remainingTime
+            startTimer()
+            togglePlayPauseButtonText()
+        }
+        binding.buttonPlayPause.setOnClickListener {
+            togglePlayPauseButtonText()
+            if (countDownTimer.isRunning) {
+                countDownTimer.pause()
+            } else {
+                timerDuration = countDownTimer.remainingTime
+                startTimer()
+            }
+        }
+        binding.buttonStop.setOnClickListener {
+            toggle()
+        }
+    }
+
+    override fun onPostCreate(savedInstanceState: Bundle?) {
+        super.onPostCreate(savedInstanceState)
+
+        // Trigger the initial hide() shortly after the activity has been
+        // created, to briefly hint to the user that UI controls
+        // are available.
+//        delayedHide(100)
+    }
+
+    private fun toggle() {
+        if (isFullscreen) {
+            goFullscreen()
+        } else {
+            hideFullscreen()
+        }
+    }
+
+    private fun goFullscreen() {
+        // Hide UI first
+        supportActionBar?.hide()
+        binding.sliderDuration.labelBehavior = LabelFormatter.LABEL_GONE
+        binding.sliderPersist.labelBehavior = LabelFormatter.LABEL_GONE
+        Handler(mainLooper).postDelayed(Runnable {
+            binding.constraintLayoutSettings.visibility = View.GONE
+        }, 50L)
+        binding.constraintLayoutPracticing.visibility = View.VISIBLE
+        isFullscreen = false
+
+        // Schedule a runnable to remove the status and navigation bar after a delay
+        hideHandler.removeCallbacks(showPart2Runnable)
+        hideHandler.postDelayed(hidePart2Runnable, UI_ANIMATION_DELAY.toLong())
+        timerDuration = binding.sliderDuration.value.toSeconds() * 60L
+        noteInterval = binding.sliderPersist.value.toSeconds()
+        binding.staffView.labelNoteName = binding.checkboxNoteName.isChecked
+        binding.staffView.labelLedgerLines = binding.checkboxLedgerLineNames.isChecked
+        togglePlayPauseButtonText()
+        startTimer()
+    }
+
+    private fun hideFullscreen() {
+        // Show the system bar
+        supportActionBar?.show()
+
+        if (Build.VERSION.SDK_INT >= 30) {
+            fullscreenContent.windowInsetsController?.show(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+        } else {
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+            WindowInsetsControllerCompat(
+                window,
+                window.decorView
+            ).show(WindowInsetsCompat.Type.systemBars())
+        }
+        isFullscreen = true
+
+        // Schedule a runnable to display UI elements after a delay
+        hideHandler.removeCallbacks(hidePart2Runnable)
+        hideHandler.postDelayed(showPart2Runnable, UI_ANIMATION_DELAY.toLong())
+        countDownTimer.stop()
+        upcomingNotesList.clear()
+    }
+
+    private fun delayedHide() {
+        hideHandler.removeCallbacks(hideRunnable)
+        hideHandler.postDelayed(hideRunnable, 250L)
+    }
+
+    private fun togglePlayPauseButtonText() {
+        val hasPauseText = binding.buttonPlayPause.text.equals(getString(R.string.pause))
+        val newText = if (countDownTimer.isRunning && hasPauseText) {
+            getString(R.string.play)
+        } else {
+            getString(R.string.pause)
+        }
+        binding.buttonPlayPause.text = newText
     }
 
     private fun setupSelectionOfSessionTypes() {
@@ -132,81 +228,115 @@ class FullscreenActivity : AppCompatActivity() {
         binding.linearLayoutSessionType.children.first().performClick()
     }
 
-    override fun onPostCreate(savedInstanceState: Bundle?) {
-        super.onPostCreate(savedInstanceState)
-
-        // Trigger the initial hide() shortly after the activity has been
-        // created, to briefly hint to the user that UI controls
-        // are available.
-//        delayedHide(100)
-    }
-
-    private fun toggle() {
-        if (isFullscreen) {
-            hide()
-        } else {
-            show()
-        }
-    }
-
-    private fun hide() {
-        // Hide UI first
-        supportActionBar?.hide()
-        binding.sliderDuration.labelBehavior = LabelFormatter.LABEL_GONE
-        binding.sliderPersist.labelBehavior = LabelFormatter.LABEL_GONE
-        Handler(mainLooper).postDelayed(Runnable {
-            binding.constraintLayoutSettings.visibility = View.GONE
-        }, 50L)
-        binding.constraintLayoutPracticing.visibility = View.VISIBLE
-        isFullscreen = false
-
-        // Schedule a runnable to remove the status and navigation bar after a delay
-        hideHandler.removeCallbacks(showPart2Runnable)
-        hideHandler.postDelayed(hidePart2Runnable, UI_ANIMATION_DELAY.toLong())
-        val practiceDuration = binding.sliderDuration.value.toSeconds() * 60L
-        val noteInterval = binding.sliderPersist.value.toSeconds()
-        countDownTimer = object : CountDownTimer(practiceDuration, noteInterval) {
-            override fun onTick(millisUntilFinished: Long) {
-                binding.textviewRemainingTime.text = millisUntilFinished.millisToTime()
+    private fun startTimer() {
+        countDownTimer = object : ExtendedCountDownTimer(timerDuration, noteInterval) {
+            override fun onTick(duration: Long) {
+                super.onTick(duration)
+                binding.textviewRemainingTime.text = duration.millisToTime()
                 val noteToShow = getNextNote()
                 binding.staffView.anim(noteToShow, noteInterval)
-                if (binding.checkboxNoteNames.isChecked) {
-                    if (noteToShow is Notes) {
-                        binding.textviewWrittenNote.text = noteToShow.visual
-                    } else {
-                        binding.textviewWrittenNote.text = ""
-                    }
-                }
             }
 
             override fun onFinish() {
-                show()
+                super.onFinish()
+                hideFullscreen()
             }
-        }.start()
+        }.start() as ExtendedCountDownTimer
     }
 
-    private fun show() {
-        // Show the system bar
-        if (Build.VERSION.SDK_INT >= 30) {
-            fullscreenContent.windowInsetsController?.show(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+    private fun getNextNote(): Any {
+        if (upcomingNotesList.isNotEmpty()) {
+            if (upcomingNotesListIndex < upcomingNotesList.size - 1) {
+                upcomingNotesListIndex++
+            } else {
+                upcomingNotesListIndex = 0
+            }
         } else {
-            fullscreenContent.systemUiVisibility =
-                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
-                        View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            when (sessionType) {
+                SessionType.RANDOM, SessionType.RANDOM_NO_DUPES -> {
+                    var lastRandomNote = -1
+                    repeat(150) {
+                        val randomNote = Random(System.nanoTime()).nextInt(0, 9)
+                        if (sessionType == SessionType.RANDOM_NO_DUPES && randomNote == lastRandomNote) {
+                            return@repeat
+                        }
+                        upcomingNotesList.add(Notes.values()[randomNote])
+                        lastRandomNote = randomNote
+                    }
+                }
+                SessionType.SCALE_UP -> {
+                    Notes.values().forEach { note ->
+                        upcomingNotesList.add(note)
+                    }
+                }
+                SessionType.SCALE_DOWN -> {
+                    Notes.values().reversedArray().forEach { note ->
+                        upcomingNotesList.add(note)
+                    }
+                }
+                SessionType.SCALE_BOTH -> {
+                    Notes.values().forEach { note ->
+                        upcomingNotesList.add(note)
+                    }
+                    Notes.values().reversedArray().forEach { note ->
+                        upcomingNotesList.add(note)
+                    }
+                }
+                SessionType.STAGGERED_UP -> {
+                    Notes.values().forEach { baseNote ->
+                        Notes.values().forEach { alternatingNote ->
+                            if (baseNote != alternatingNote) {
+                                upcomingNotesList.add(baseNote)
+                                upcomingNotesList.add(alternatingNote)
+                            }
+                        }
+                    }
+                }
+                SessionType.STAGGERED_DOWN -> {
+                    Notes.values().reversedArray().forEach { baseNote ->
+                        Notes.values().reversedArray().forEach { alternatingNote ->
+                            if (baseNote != alternatingNote) {
+                                upcomingNotesList.add(baseNote)
+                                upcomingNotesList.add(alternatingNote)
+                            }
+                        }
+                    }
+                }
+                SessionType.STAGGERED_BOTH -> {
+                    Notes.values().forEach { baseNote ->
+                        Notes.values().forEach { alternatingNote ->
+                            if (baseNote != alternatingNote) {
+                                upcomingNotesList.add(baseNote)
+                                upcomingNotesList.add(alternatingNote)
+                            }
+                        }
+                    }
+                    Notes.values().reversedArray().forEach { baseNote ->
+                        Notes.values().reversedArray().forEach { alternatingNote ->
+                            if (baseNote != alternatingNote) {
+                                upcomingNotesList.add(baseNote)
+                                upcomingNotesList.add(alternatingNote)
+                            }
+                        }
+                    }
+                }
+                else -> {
+                    sessionType.notes.forEach { noteString ->
+                        upcomingNotesList.add(convertNoteStringToEnum(noteString))
+                    }
+                }
+            }
+            upcomingNotesList.add(Symbols.END_BAR)
+            upcomingNotesList.add(Symbols.PAUSE)
+            upcomingNotesListIndex = 0
         }
-        isFullscreen = true
-
-        // Schedule a runnable to display UI elements after a delay
-        hideHandler.removeCallbacks(hidePart2Runnable)
-        hideHandler.postDelayed(showPart2Runnable, UI_ANIMATION_DELAY.toLong())
-        countDownTimer?.cancel()
-        upcomingNotesList.clear()
+        return upcomingNotesList[upcomingNotesListIndex]
     }
 
-    private fun delayedHide() {
-        hideHandler.removeCallbacks(hideRunnable)
-        hideHandler.postDelayed(hideRunnable, 250L)
-    }
+    private fun convertNoteStringToEnum(noteString: Char) =
+        Notes.values().find { note -> note.notation == noteString.toString() }
+            ?: Symbols.values().find { symbol -> symbol.notation == noteString.toString() }
+            ?: Notes.HIGH_A
 
     private fun Float.toSeconds() = this.toLong() * 1000L
 
@@ -221,190 +351,6 @@ class FullscreenActivity : AppCompatActivity() {
             "%02d:%02d".format(minutes, seconds)
         }
     }
-
-    private fun getNextNote(): Any {
-        return when (sessionType) {
-            SessionType.RANDOM, SessionType.RANDOM_NO_DUPES -> {
-                if (upcomingNotesList.isEmpty()) {
-                    var lastRandomNote = -1
-                    repeat(50) {
-                        val randomNote = Random(System.nanoTime()).nextInt(0, 9)
-                        if (sessionType == SessionType.RANDOM_NO_DUPES && randomNote == lastRandomNote) {
-                            return@repeat
-                        }
-                        upcomingNotesList.add(Notes.values()[randomNote])
-                        lastRandomNote = randomNote
-                    }
-                }
-                val noteToReturn = upcomingNotesList[0]
-                upcomingNotesList.removeAt(0)
-                return noteToReturn
-            }
-            SessionType.SCALE_UP -> {
-                if (upcomingNotesList.isEmpty()) {
-                    Notes.values().forEach { note ->
-                        upcomingNotesList.add(note)
-                    }
-                    upcomingNotesList.add(Symbols.END_BAR)
-                    upcomingNotesList.add(Symbols.PAUSE)
-                }
-                val noteToReturn = upcomingNotesList[0]
-                upcomingNotesList.removeAt(0)
-                noteToReturn
-            }
-            SessionType.SCALE_DOWN -> {
-                if (upcomingNotesList.isEmpty()) {
-                    Notes.values().reversedArray().forEach { note ->
-                        upcomingNotesList.add(note)
-                    }
-                    upcomingNotesList.add(Symbols.END_BAR)
-                    upcomingNotesList.add(Symbols.PAUSE)
-                }
-                val noteToReturn = upcomingNotesList[0]
-                upcomingNotesList.removeAt(0)
-                noteToReturn
-            }
-            SessionType.SCALE_BOTH -> {
-                if (upcomingNotesList.isEmpty()) {
-                    Notes.values().forEach { note ->
-                        upcomingNotesList.add(note)
-                    }
-                    Notes.values().reversedArray().forEach { note ->
-                        upcomingNotesList.add(note)
-                    }
-                    upcomingNotesList.add(Symbols.END_BAR)
-                    upcomingNotesList.add(Symbols.PAUSE)
-                }
-                val noteToReturn = upcomingNotesList[0]
-                upcomingNotesList.removeAt(0)
-                noteToReturn
-            }
-            SessionType.STAGGERED_UP -> {
-                if (upcomingNotesList.isEmpty()) {
-                    Notes.values().forEach { baseNote ->
-                        Notes.values().forEach { alternatingNote ->
-                            if (baseNote != alternatingNote) {
-                                upcomingNotesList.add(baseNote)
-                                upcomingNotesList.add(alternatingNote)
-                            }
-                        }
-                    }
-                    upcomingNotesList.add(Symbols.END_BAR)
-                    upcomingNotesList.add(Symbols.PAUSE)
-                }
-                val noteToReturn = upcomingNotesList[0]
-                upcomingNotesList.removeAt(0)
-                noteToReturn
-            }
-            SessionType.STAGGERED_DOWN -> {
-                if (upcomingNotesList.isEmpty()) {
-                    Notes.values().reversedArray().forEach { baseNote ->
-                        Notes.values().reversedArray().forEach { alternatingNote ->
-                            if (baseNote != alternatingNote) {
-                                upcomingNotesList.add(baseNote)
-                                upcomingNotesList.add(alternatingNote)
-                            }
-                        }
-                    }
-                    upcomingNotesList.add(Symbols.END_BAR)
-                    upcomingNotesList.add(Symbols.PAUSE)
-                }
-                val noteToReturn = upcomingNotesList[0]
-                upcomingNotesList.removeAt(0)
-                noteToReturn
-            }
-            SessionType.STAGGERED_BOTH -> {
-                if (upcomingNotesList.isEmpty()) {
-                    Notes.values().forEach { baseNote ->
-                        Notes.values().forEach { alternatingNote ->
-                            if (baseNote != alternatingNote) {
-                                upcomingNotesList.add(baseNote)
-                                upcomingNotesList.add(alternatingNote)
-                            }
-                        }
-                    }
-                    Notes.values().reversedArray().forEach { baseNote ->
-                        Notes.values().reversedArray().forEach { alternatingNote ->
-                            if (baseNote != alternatingNote) {
-                                upcomingNotesList.add(baseNote)
-                                upcomingNotesList.add(alternatingNote)
-                            }
-                        }
-                    }
-                    upcomingNotesList.add(Symbols.END_BAR)
-                    upcomingNotesList.add(Symbols.PAUSE)
-                }
-                val noteToReturn = upcomingNotesList[0]
-                upcomingNotesList.removeAt(0)
-                noteToReturn
-            }
-            SessionType.PRESET_1 -> {
-                if (upcomingNotesList.isEmpty()) {
-                    "GABGABBAGBAG|_".forEach { noteString ->
-                        upcomingNotesList.add(convertNoteStringToEnum(noteString))
-                    }
-                }
-                val noteToReturn = upcomingNotesList[0]
-                upcomingNotesList.removeAt(0)
-                noteToReturn
-            }
-            SessionType.PRESET_2 -> {
-                if (upcomingNotesList.isEmpty()) {
-                    "BCBCBCBCBCBC|_".forEach { noteString ->
-                        upcomingNotesList.add(convertNoteStringToEnum(noteString))
-                    }
-                }
-                val noteToReturn = upcomingNotesList[0]
-                upcomingNotesList.removeAt(0)
-                noteToReturn
-            }
-            SessionType.PRESET_3 -> {
-                if (upcomingNotesList.isEmpty()) {
-                    "GABCBAGGABCBAG|_".forEach { noteString ->
-                        upcomingNotesList.add(convertNoteStringToEnum(noteString))
-                    }
-                }
-                val noteToReturn = upcomingNotesList[0]
-                upcomingNotesList.removeAt(0)
-                noteToReturn
-            }
-            SessionType.PRESET_4 -> {
-                if (upcomingNotesList.isEmpty()) {
-                    "CDCDCBACDCDACD|_".forEach { noteString ->
-                        upcomingNotesList.add(convertNoteStringToEnum(noteString))
-                    }
-                }
-                val noteToReturn = upcomingNotesList[0]
-                upcomingNotesList.removeAt(0)
-                noteToReturn
-            }
-            SessionType.PRESET_5 -> {
-                if (upcomingNotesList.isEmpty()) {
-                    "GABCDCBAGABCDCD|_".forEach { noteString ->
-                        upcomingNotesList.add(convertNoteStringToEnum(noteString))
-                    }
-                }
-                val noteToReturn = upcomingNotesList[0]
-                upcomingNotesList.removeAt(0)
-                noteToReturn
-            }
-            SessionType.PRESET_6 -> {
-                if (upcomingNotesList.isEmpty()) {
-                    "ADCDBGAADBDACD|_".forEach { noteString ->
-                        upcomingNotesList.add(convertNoteStringToEnum(noteString))
-                    }
-                }
-                val noteToReturn = upcomingNotesList[0]
-                upcomingNotesList.removeAt(0)
-                noteToReturn
-            }
-        }
-    }
-
-    private fun convertNoteStringToEnum(noteString: Char) =
-        Notes.values().find { note -> note.notation == noteString.toString() }
-            ?: Symbols.values().find { symbol -> symbol.notation == noteString.toString() }
-            ?: Notes.HIGH_A
 
     companion object {
         /**

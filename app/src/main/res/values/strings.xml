@@ -1,10 +1,15 @@
 <resources>
     <string name="app_name">Bagpipes Chanter Music Notes Practice</string>
     <string name="begin_button">Begin Practice</string>
-    <string name="display_names_of_notes">Display Names of Notes</string>
+    <string name="display_name_of_note">Display Name of Note</string>
+    <string name="display_names_of_ledger_lines">Display Names of Ledger Lines</string>
     <string name="duration_of_practice_time_in_minutes">Duration of practice time in minutes</string>
     <string name="persist_time_in_seconds">Persist time in seconds</string>
     <string name="choose_session_type">Choose session type:</string>
+    <string name="rewind">Rewind</string>
+    <string name="play">Play</string>
+    <string name="pause">Pause</string>
+    <string name="stop">Stop</string>
     <plurals name="plural_seconds">
         <item quantity="one">%d second</item>
         <item quantity="other">%d seconds</item>

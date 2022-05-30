@@ -23,14 +23,13 @@ class StaffView @JvmOverloads constructor(
 
     var my_x: Float = 0f
     var my_y: Float = 0f
-    var needsLedgerLine = false
     val bk =
         Paint().apply {
-            color = Color.BLACK;strokeWidth = 10f;textSize = 425f;textScaleX = 2.0f;isAntiAlias =
+            color = Color.BLACK;strokeWidth = 10f;textSize = 425f;textScaleX = 2.75f;isAntiAlias =
             true
         }
     val bk2 = Paint().apply {
-        color = Color.BLACK;strokeWidth = 10f;textSize = 400f;textScaleX = 0.75f;isAntiAlias = true
+        color = Color.BLACK;strokeWidth = 10f;textSize = 400f;textScaleX = 1f;isAntiAlias = true
     }
     val bk3 = Paint().apply {
         color = Color.BLACK;strokeWidth = 5f;textSize = 420f;textScaleX = 0.5f;isAntiAlias = true
@@ -42,20 +41,18 @@ class StaffView @JvmOverloads constructor(
             color = Color.BLACK;strokeWidth = 5f;textSize = 420f;textScaleX = 0.5f;isAntiAlias =
             true;
         }
-    val y1 =
-        Paint().apply { color = Color.YELLOW;strokeWidth = 5f;textSize = 420f;isAntiAlias = true; }
+    val y1 = Paint().apply { color = Color.RED;strokeWidth = 5f;textSize = 30f;isAntiAlias = true }
     var showingNote: Any = Notes.LOW_G
+    var labelNoteName = false
+    var labelLedgerLines = false
 
     fun anim(noteToShow: Any, noteInterval: Long) {
         showingNote = noteToShow
         var startingValue = 850f
         var endingValue = 300f
         if (noteToShow is Notes) {
-            if (noteToShow == Notes.HIGH_A) {
-                needsLedgerLine = true
-            }
             my_y = 550f - (50 * noteToShow.ordinal).toFloat()
-            if (noteToShow.flipped) {
+            if (noteToShow.flip) {
                 startingValue = 50f
                 endingValue = 600f
                 my_y = 100f + (50 * noteToShow.ordinal).toFloat()
@@ -80,20 +77,43 @@ class StaffView @JvmOverloads constructor(
     }
 
     private fun drawStaffScale(canvas: Canvas?) {
-        canvas?.drawText(CHAR_STAFF_5, 20f.dp2px(), 230f.dp2px(), bk)
-        canvas?.drawText(CHAR_TREBLE_CLEF, 25f.dp2px(), 230f.dp2px(), bk2)
+        canvas?.drawText(CHAR_STAFF_5, (-25f).dp2px(), 230f.dp2px(), bk)
+        canvas?.drawText(CHAR_TREBLE_CLEF, (-5f).dp2px(), 230f.dp2px(), bk2)
         canvas?.drawText(CHAR_BAR_START, 100f.dp2px(), 230f.dp2px(), bk3)
+        if (labelLedgerLines) {
+            Notes.values().reversedArray().forEachIndexed { index, note ->
+                canvas?.drawText(
+                    note.notation,
+                    106f.dp2px(),
+                    (19.5f * (index + 1) + 16.5f).dp2px(),
+                    y1
+                )
+            }
+        }
     }
 
     private fun drawNoteOrSymbol(canvas: Canvas?) {
-        if ((showingNote is Notes) && (showingNote as Notes).flipped) {
+        if ((showingNote is Notes) && (showingNote as Notes).flip) {
             canvas?.save()
-            canvas?.rotate(-180f, 205f.dp2px(), 100f.dp2px())
+            canvas?.rotate(180f, 205f.dp2px(), 100f.dp2px())
             drawQuarterNo(canvas)
             if (showingNote == Notes.HIGH_A) {
                 canvas?.drawText(CHAR_STAFF_1, my_x - 30f, my_y + 150f, bk5)
             }
             canvas?.restore()
+            if (labelNoteName) {
+                val yValue = when (showingNote) {
+                    Notes.HIGH_A -> 100f
+                    Notes.HIGH_G -> 150f
+                    Notes.F -> 200f
+                    Notes.E -> 250f
+                    Notes.D -> 300f
+                    Notes.C -> 350f
+                    Notes.B -> 400f
+                    else -> 0f
+                }
+                canvas?.drawText((showingNote as Notes).visual, my_x * -1 + 960f, yValue, y1)
+            }
         } else {
             if (showingNote is Notes) {
                 drawQuarterNo(canvas)
@@ -105,7 +125,12 @@ class StaffView @JvmOverloads constructor(
 
     private fun drawQuarterNo(canvas: Canvas?) {
         canvas?.drawText(CHAR_QUARTER_NOTE, my_x, my_y, bk4)
-        if (needsLedgerLine) canvas?.drawText(CHAR_QUARTER_NOTE, my_x, my_y, bk4)
+        if (labelNoteName && !(showingNote as Notes).flip) {
+            canvas?.drawText((showingNote as Notes).visual, my_x + 30f, my_y - 40f, y1)
+        }
+        if (showingNote == Notes.HIGH_A) {
+            canvas?.drawText(CHAR_QUARTER_NOTE, my_x, my_y, bk4)
+        }
     }
 
     private fun drawSymbolNo(canvas: Canvas?) {
