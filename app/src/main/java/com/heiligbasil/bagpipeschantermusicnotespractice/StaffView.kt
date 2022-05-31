@@ -13,6 +13,7 @@ import com.heiligbasil.bagpipeschantermusicnotespractice.Constants.CHAR_QUARTER_
 import com.heiligbasil.bagpipeschantermusicnotespractice.Constants.CHAR_STAFF_1
 import com.heiligbasil.bagpipeschantermusicnotespractice.Constants.CHAR_STAFF_5
 import com.heiligbasil.bagpipeschantermusicnotespractice.Constants.CHAR_TREBLE_CLEF
+import kotlin.math.roundToInt
 
 class StaffView @JvmOverloads constructor(
     context: Context,
@@ -45,6 +46,8 @@ class StaffView @JvmOverloads constructor(
     var showingNote: Any = Notes.LOW_G
     var labelNoteName = false
     var labelLedgerLines = false
+    var percentageAnimationComplete: Int = 0
+        private set
 
     fun anim(noteToShow: Any, noteInterval: Long) {
         showingNote = noteToShow
@@ -64,6 +67,7 @@ class StaffView @JvmOverloads constructor(
         animator.interpolator = LinearInterpolator()
         animator.duration = noteInterval
         animator.addUpdateListener {
+            percentageAnimationComplete = (it.animatedFraction * 100).roundToInt()
             my_x = animator.animatedValue as Float
             invalidate()
         }

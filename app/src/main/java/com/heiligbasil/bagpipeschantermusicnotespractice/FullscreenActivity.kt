@@ -112,7 +112,11 @@ class FullscreenActivity : AppCompatActivity() {
         }
         binding.buttonRewind.setOnClickListener {
             countDownTimer.rewindByInterval()
-            upcomingNotesListIndex--
+            upcomingNotesListIndex = if (binding.staffView.percentageAnimationComplete < 10) {
+                upcomingNotesListIndex - 2
+            } else {
+                upcomingNotesListIndex - 1
+            }
             if (upcomingNotesListIndex < 0) {
                 upcomingNotesListIndex = 0
             }
