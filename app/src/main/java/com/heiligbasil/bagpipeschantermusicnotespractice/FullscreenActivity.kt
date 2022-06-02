@@ -3,6 +3,7 @@ package com.heiligbasil.bagpipeschantermusicnotespractice
 import android.annotation.SuppressLint
 import android.graphics.Color
 import android.os.*
+import android.text.Html
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowInsets
@@ -123,6 +124,7 @@ class FullscreenActivity : AppCompatActivity() {
             timerDuration = countDownTimer.remainingTime
             startTimer()
             togglePlayPauseButtonText()
+            updateHighlightedNoteOnDeck()
         }
         binding.buttonPlayPause.setOnClickListener {
             togglePlayPauseButtonText()
@@ -334,7 +336,46 @@ class FullscreenActivity : AppCompatActivity() {
             upcomingNotesList.add(Symbols.PAUSE)
             upcomingNotesListIndex = 0
         }
+        updateHighlightedNoteOnDeck()
         return upcomingNotesList[upcomingNotesListIndex]
+    }
+
+    private fun updateHighlightedNoteOnDeck() {
+        val notesList = upcomingNotesList.mapNotNull { (it as? Notes)?.notation }.toMutableList()
+        var notesIndex = upcomingNotesListIndex
+        val currentNote = notesList.getOrNull(notesIndex)
+        var encodedNoteLength = 0
+        currentNote?.let {
+            val noteToEncode = "<font color=#FFD700>$currentNote</font>"
+            notesList[notesIndex] = noteToEncode
+            encodedNoteLength = noteToEncode.length - 1
+        }
+        var indexRange = when (notesIndex) {
+            in 0..89 -> {
+                0..89 + encodedNoteLength
+            }
+            in 90..179 -> {
+                notesIndex -= 90
+                90..179 + encodedNoteLength
+            }
+            in 180..269 -> {
+                notesIndex -= 180
+                180..269 + encodedNoteLength
+            }
+            else -> 270..notesList.size
+        }
+        if (indexRange.last >= notesList.size) {
+            indexRange = indexRange.first until notesList.size + encodedNoteLength
+        }
+        val arrayAsString = notesList.joinToString(separator = "")
+        val resizedString = arrayAsString.substring(indexRange)
+        val finalString = Html.fromHtml(resizedString, Html.FROM_HTML_MODE_COMPACT)
+        binding.textviewNotesOnDeck.text = finalString
+    }
+
+    private fun isTextTooWide(newText: String): Boolean {
+        val textWidth = binding.textviewNotesOnDeck.paint.measureText(newText)
+        return (textWidth / binding.textviewNotesOnDeck.maxLines) >= binding.textviewNotesOnDeck.measuredWidth
     }
 
     private fun convertNoteStringToEnum(noteString: Char) =
