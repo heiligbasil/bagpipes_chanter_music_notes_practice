@@ -7,4 +7,5 @@ object Constants {
     const val CHAR_BAR_START = "\uD834\uDD03"
     const val CHAR_BAR_END = "\uD834\uDD02"
     const val CHAR_QUARTER_NOTE = "\uD834\uDD5F"
+    const val CHAR_GRACENOTE = "\uD834\uDD62"
 }

@@ -341,7 +341,7 @@ class FullscreenActivity : AppCompatActivity() {
     }
 
     private fun updateHighlightedNoteOnDeck() {
-        val notesList = upcomingNotesList.mapNotNull { (it as? Notes)?.notation }.toMutableList()
+        val notesList = upcomingNotesList.mapNotNull { getPrintableString(it) }.toMutableList()
         var notesIndex = upcomingNotesListIndex
         val currentNote = notesList.getOrNull(notesIndex)
         var encodedNoteLength = 0
@@ -371,6 +371,16 @@ class FullscreenActivity : AppCompatActivity() {
         val resizedString = arrayAsString.substring(indexRange)
         val finalString = Html.fromHtml(resizedString, Html.FROM_HTML_MODE_COMPACT)
         binding.textviewNotesOnDeck.text = finalString
+    }
+
+    private fun getPrintableString(c: Any?): String? {
+        return when (c) {
+            is Notes -> c.notation
+            Symbols.GRACE_NOTE_G -> Symbols.GRACE_NOTE_G.notation
+            Symbols.GRACE_NOTE_D -> Symbols.GRACE_NOTE_D.notation
+            Symbols.GRACE_NOTE_E -> Symbols.GRACE_NOTE_E.notation
+            else -> null
+        }
     }
 
     private fun isTextTooWide(newText: String): Boolean {

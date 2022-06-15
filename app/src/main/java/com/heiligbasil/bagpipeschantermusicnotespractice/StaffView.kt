@@ -42,7 +42,11 @@ class StaffView @JvmOverloads constructor(
             color = Color.BLACK;strokeWidth = 5f;textSize = 420f;textScaleX = 0.5f;isAntiAlias =
             true;
         }
+    val bk6 = Paint().apply {
+        color = Color.BLACK;strokeWidth = 5f;textSize = 100f;textScaleX = 1f;isAntiAlias = true
+    }
     val y1 = Paint().apply { color = Color.RED;strokeWidth = 5f;textSize = 30f;isAntiAlias = true }
+    var p1 = bk3
     var showingNote: Any = Notes.LOW_G
     var labelNoteName = false
     var labelLedgerLines = false
@@ -122,6 +126,21 @@ class StaffView @JvmOverloads constructor(
             if (showingNote is Notes) {
                 drawQuarterNo(canvas)
             } else {
+                when (showingNote) {
+                    Symbols.GRACE_NOTE_G -> {
+                        my_y = 100f + (50 * 1).toFloat()
+                        p1 = bk6
+                    }
+                    Symbols.GRACE_NOTE_D -> {
+                        my_y = 100f + (50 * 4).toFloat()
+                        p1 = bk6
+                    }
+                    Symbols.GRACE_NOTE_E -> {
+                        my_y = 100f + (50 * 3).toFloat()
+                        p1 = bk6
+                    }
+                    else -> p1 = bk3
+                }
                 drawSymbolNo(canvas)
             }
         }
@@ -138,7 +157,7 @@ class StaffView @JvmOverloads constructor(
     }
 
     private fun drawSymbolNo(canvas: Canvas?) {
-        canvas?.drawText((showingNote as Symbols).visual, my_x, my_y, bk3)
+        canvas?.drawText((showingNote as Symbols).visual, my_x, my_y, p1)
     }
 
     private fun Float.dp2px(): Float {

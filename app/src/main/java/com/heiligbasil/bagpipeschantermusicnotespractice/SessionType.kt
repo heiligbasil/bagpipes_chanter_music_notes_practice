@@ -31,4 +31,12 @@ enum class SessionType(val displayText: String, val notes: String) {
     PRESET_16("Both-hands exercise 4", "ADFĀADFADFĀḠED|_"),
     PRESET_17("Both-hands exercise 5", "CEĀECEĀDFĀFDFĀ|_"),
     PRESET_18("Both-hands exercise 6", "ĀFDFĀFDFḠFEĀḠED|_"),
+
+    PRESET_19("Gracenotes 1", "GǥA_AǥB_BǥC_CǥB_BǥA_AǥG|_"),
+    PRESET_20("Gracenotes 2", "GđA_AđB_BđC_CđB_BđA_AđG|_"),
+    PRESET_21("Gracenotes 3", "GɇA_AɇB_BɇC_CɇB_BɇA_AɇG|_"),
+    PRESET_22("Gracenotes 4", "ǥGǥAǥBǥCǥDǥEǥFǥEǥDǥCǥBǥAǥG|_"),
+    PRESET_23("Gracenotes 5", "đGđAđBđCđDđEđFđEđDđCđBđAđG|_"),
+    PRESET_24("Gracenotes 6", "ɇGɇAɇBɇCɇDɇEɇFɇEɇDɇCɇBɇAɇG|_"),
+    PRESET_25("Gracenotes 7", "ǥGđGɇGǥAđAɇAǥBđBɇBǥCđCɇCǥCđCɇCǥBđBɇBǥAđAɇAǥGđGɇG|_"),
 }
