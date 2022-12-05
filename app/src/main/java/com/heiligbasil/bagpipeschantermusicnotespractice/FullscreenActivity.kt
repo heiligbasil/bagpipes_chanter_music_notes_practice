@@ -239,8 +239,8 @@ class FullscreenActivity : AppCompatActivity() {
             override fun onTick(duration: Long) {
                 super.onTick(duration)
                 binding.textviewRemainingTime.text = duration.millisToTime()
-                val noteToShow = getNextNote()
-                binding.staffView.anim(noteToShow, noteInterval)
+                val notePair = getNextNote()
+                binding.staffView.anim(notePair.first, notePair.second, noteInterval)
             }
 
             override fun onFinish() {
@@ -250,7 +250,7 @@ class FullscreenActivity : AppCompatActivity() {
         }.start() as ExtendedCountDownTimer
     }
 
-    private fun getNextNote(): Any {
+    private fun getNextNote(): Pair<Any, Symbols?> {
         if (upcomingNotesList.isNotEmpty()) {
             if (upcomingNotesListIndex < upcomingNotesList.size - 1) {
                 upcomingNotesListIndex++
@@ -336,20 +336,34 @@ class FullscreenActivity : AppCompatActivity() {
             upcomingNotesList.add(Symbols.PAUSE)
             upcomingNotesListIndex = 0
         }
-        updateHighlightedNoteOnDeck()
-        return upcomingNotesList[upcomingNotesListIndex]
+        val symbol = updateHighlightedNoteOnDeck()
+        symbol?.let { upcomingNotesListIndex++ }
+        return Pair(upcomingNotesList[upcomingNotesListIndex], symbol)
     }
 
-    private fun updateHighlightedNoteOnDeck() {
+    private fun updateHighlightedNoteOnDeck(): Symbols? {
         val notesList = upcomingNotesList.mapNotNull { getPrintableString(it) }.toMutableList()
         var notesIndex = upcomingNotesListIndex
-        val currentNote = notesList.getOrNull(notesIndex)
-        var encodedNoteLength = 0
-        currentNote?.let {
-            val noteToEncode = "<font color=#FFD700>$currentNote</font>"
-            notesList[notesIndex] = noteToEncode
-            encodedNoteLength = noteToEncode.length - 1
+        val pairedNote = upcomingNotesList[notesIndex].isPairedNote()
+        var currentNotes: Pair<String?, String?> = Pair(notesList.getOrNull(notesIndex), null)
+        if (pairedNote) {
+            currentNotes = Pair(
+                first = notesList.getOrNull(notesIndex + 1),
+                second = notesList.getOrNull(notesIndex)
+            )
         }
+
+        val noteToEncode = "<font color=#FFD700>${currentNotes.first}</font>"
+        val pairedNoteToEncode = "<font color=#FFD700>${currentNotes.second}</font>"
+        if (pairedNote) {
+            notesList[notesIndex] = pairedNoteToEncode
+            notesList[notesIndex + 1] = noteToEncode
+        } else {
+            notesList[notesIndex] = noteToEncode
+        }
+        var encodedNoteLength = noteToEncode.length - 1
+        if (pairedNote) encodedNoteLength += pairedNoteToEncode.length - 1
+
         var indexRange = when (notesIndex) {
             in 0..89 -> {
                 0..89 + encodedNoteLength
@@ -368,19 +382,33 @@ class FullscreenActivity : AppCompatActivity() {
             indexRange = indexRange.first until notesList.size + encodedNoteLength
         }
         val arrayAsString = notesList.joinToString(separator = "")
-        val resizedString = arrayAsString.substring(indexRange)
+        var resizedString = arrayAsString.substring(indexRange)
+        resizedString = resizedString.replace("ǥ", "<sup>ǥ</sup>")
+        resizedString = resizedString.replace("đ", "<sup>đ</sup>")
+        resizedString = resizedString.replace("ɇ", "<sup>ɇ</sup>")
         val finalString = Html.fromHtml(resizedString, Html.FROM_HTML_MODE_COMPACT)
-        binding.textviewNotesOnDeck.text = finalString
+        binding.textviewNotesOnDeck.setText(finalString, TextView.BufferType.SPANNABLE)
+        return if (pairedNote) upcomingNotesList[notesIndex] as Symbols else null
     }
 
     private fun getPrintableString(c: Any?): String? {
         return when (c) {
             is Notes -> c.notation
+            Symbols.END_BAR -> "."
+            Symbols.PAUSE -> " "
             Symbols.GRACE_NOTE_G -> Symbols.GRACE_NOTE_G.notation
             Symbols.GRACE_NOTE_D -> Symbols.GRACE_NOTE_D.notation
             Symbols.GRACE_NOTE_E -> Symbols.GRACE_NOTE_E.notation
             else -> null
         }
+    }
+
+    private fun Any.isPairedNote(): Boolean {
+        return this is Symbols && (
+                this == Symbols.GRACE_NOTE_G ||
+                        this == Symbols.GRACE_NOTE_D ||
+                        this == Symbols.GRACE_NOTE_E
+                )
     }
 
     private fun isTextTooWide(newText: String): Boolean {

@@ -24,6 +24,8 @@ class StaffView @JvmOverloads constructor(
 
     var my_x: Float = 0f
     var my_y: Float = 0f
+    var my_x2: Float = 0f
+    var my_y2: Float = 0f
     val bk =
         Paint().apply {
             color = Color.BLACK;strokeWidth = 10f;textSize = 425f;textScaleX = 2.75f;isAntiAlias =
@@ -48,13 +50,15 @@ class StaffView @JvmOverloads constructor(
     val y1 = Paint().apply { color = Color.RED;strokeWidth = 5f;textSize = 30f;isAntiAlias = true }
     var p1 = bk3
     var showingNote: Any = Notes.LOW_G
+    var pairedNote: Symbols? = null
     var labelNoteName = false
     var labelLedgerLines = false
     var percentageAnimationComplete: Int = 0
         private set
 
-    fun anim(noteToShow: Any, noteInterval: Long) {
+    fun anim(noteToShow: Any, pairedNote: Symbols?, noteInterval: Long) {
         showingNote = noteToShow
+        this.pairedNote = pairedNote
         var startingValue = 850f
         var endingValue = 300f
         if (noteToShow is Notes) {
@@ -76,6 +80,17 @@ class StaffView @JvmOverloads constructor(
             invalidate()
         }
         animator.start()
+        pairedNote?.let {
+            val animator2 = ValueAnimator.ofFloat(850f, 300f)
+            animator2.interpolator = LinearInterpolator()
+            animator2.duration = noteInterval
+            animator2.addUpdateListener {
+                percentageAnimationComplete = (it.animatedFraction * 100).roundToInt()
+                my_x2 = animator2.animatedValue as Float
+                invalidate()
+            }
+            animator2.start()
+        }
     }
 
     override fun onDraw(canvas: Canvas?) {
@@ -101,6 +116,24 @@ class StaffView @JvmOverloads constructor(
     }
 
     private fun drawNoteOrSymbol(canvas: Canvas?) {
+        pairedNote?.let { symbol ->
+            when (symbol) {
+                Symbols.GRACE_NOTE_G -> {
+                    my_y2 = 100f + (50 * 1).toFloat()
+                    p1 = bk6
+                }
+                Symbols.GRACE_NOTE_D -> {
+                    my_y2 = 100f + (50 * 4).toFloat()
+                    p1 = bk6
+                }
+                Symbols.GRACE_NOTE_E -> {
+                    my_y2 = 100f + (50 * 3).toFloat()
+                    p1 = bk6
+                }
+                else -> p1 = bk3
+            }
+            canvas?.drawText(symbol.visual, my_x2, my_y2, p1)
+        }
         if ((showingNote is Notes) && (showingNote as Notes).flip) {
             canvas?.save()
             canvas?.rotate(180f, 205f.dp2px(), 100f.dp2px())
@@ -126,22 +159,7 @@ class StaffView @JvmOverloads constructor(
             if (showingNote is Notes) {
                 drawQuarterNo(canvas)
             } else {
-                when (showingNote) {
-                    Symbols.GRACE_NOTE_G -> {
-                        my_y = 100f + (50 * 1).toFloat()
-                        p1 = bk6
-                    }
-                    Symbols.GRACE_NOTE_D -> {
-                        my_y = 100f + (50 * 4).toFloat()
-                        p1 = bk6
-                    }
-                    Symbols.GRACE_NOTE_E -> {
-                        my_y = 100f + (50 * 3).toFloat()
-                        p1 = bk6
-                    }
-                    else -> p1 = bk3
-                }
-                drawSymbolNo(canvas)
+                // Show Symbol
             }
         }
     }
